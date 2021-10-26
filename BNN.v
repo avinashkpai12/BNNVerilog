@@ -326,10 +326,16 @@ module BNN
 							Result_RowN[i] = 1;
 						end
 				//end
-		
+					
 			
 	end
 		
+		if(SizeCount_check == 16'b1100) begin
+			Result_RowN = {6'b0, Result_RowN[9:0]};
+		end
+		else if (SizeCount_check == 16'b1010) begin
+			Result_RowN = {8'b0, Result_RowN[7:0]};
+		end
 	
 	
 	
@@ -376,7 +382,7 @@ module BNN
 					dut_sram_write_address <= 12'b0;
 					dut_sram_write_data <= Result_RowN;					
 				end
-			else if(write_addr_sel == 2'b01 && wr_enable == 1'b1)
+			else if(write_addr_sel == 2'b01)
 				begin
 					dut_sram_write_address <= dut_sram_write_address + 12'b1;
 					dut_sram_write_data <= Result_RowN;
@@ -384,7 +390,7 @@ module BNN
 			else if(write_addr_sel == 2'b10)
 				begin	
 					dut_sram_write_address <= dut_sram_write_address;
-					dut_sram_write_data <= Result_RowN;
+					dut_sram_write_data <= dut_sram_write_data;
 					
 				end
 	end
