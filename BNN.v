@@ -1,3 +1,9 @@
+/***********************************************
+Project : Convolution using all binary neural network
+Author : Avinash Pai
+Date : 10/26/2021
+************************************************/
+
 module BNN
 (
 	//Control Signals
