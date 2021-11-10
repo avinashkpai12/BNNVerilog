@@ -61,6 +61,7 @@ module BNN
 	reg [15:0]		Result_RowN; //Result of individual row	
 	reg 			carry;
 	reg [15:0]		Output; //stores the output after convolution
+	reg 			busy_val;
 	integer i;
 	//Control Path
 		
@@ -68,10 +69,12 @@ module BNN
 	always @(posedge clk or negedge reset) begin
 		if (!reset)begin
 			current_state <= 4'b0;
-			busy = 0;
+			busy <= 0;
 		end
-		else
+		else begin
 			current_state <= next_state;
+			busy <= busy_val;
+		end	
 	end
 	
 	always @(*) begin
@@ -83,7 +86,7 @@ module BNN
 				write_addr_sel = 2'b10;
 				wr_enable	= 1'b0;
 				WEnable = 1'b0;
-				busy = 0;
+				busy_val = 0;
 				if (run == 1'b1)
 					next_state = s1;
 				else
@@ -96,7 +99,7 @@ module BNN
 				write_addr_sel = 2'b10;
 				wr_enable	= 1'b0;
 				WEnable = 1'b0;
-				busy = 1;
+				busy_val = 1;
 				next_state 	= s2;
 			end
 			s2 : begin
@@ -106,7 +109,7 @@ module BNN
 				write_addr_sel = 2'b10;
 				wr_enable	= 1'b0;
 				WEnable = 1'b0;
-				busy = 1;
+				busy_val = 1;
 				
 				if(sram_dut_read_data == 8'hff)
 					next_state = s0;
@@ -120,7 +123,7 @@ module BNN
 				write_addr_sel = 2'b10;
 				wr_enable	= 1'b0;
 				WEnable = 1'b0;
-				busy = 1;
+				busy_val = 1;
 	
 				next_state = s4;
 			end
@@ -131,7 +134,7 @@ module BNN
 				write_addr_sel = 2'b10;
 				wr_enable	= 1'b0;
 				WEnable = 1'b0;
-				busy = 1;
+				busy_val = 1;
 				
 				next_state = s5;
 			end
@@ -142,7 +145,7 @@ module BNN
 				write_addr_sel = 2'b10;
 				wr_enable	= 1'b0;
 				WEnable = 1'b1;
-				busy = 1;
+				busy_val = 1;
 				if(SizeCount == (SizeCount_check - 16'b10))
 					next_state = s8;
 				else
@@ -168,7 +171,7 @@ module BNN
 				write_addr_sel = 2'b01; 
 				wr_enable	= 1'b1;
 				WEnable = 1'b1;
-				busy = 1;
+				busy_val = 1;
 				
 				next_state = s10;
 			end
@@ -179,7 +182,7 @@ module BNN
 				write_addr_sel = 2'b00;
 				wr_enable	= 1'b1;
 				WEnable = 1'b1;
-				busy = 1;
+				busy_val = 1;
 				
 				next_state 	= s9;
 			end
@@ -190,7 +193,7 @@ module BNN
 				write_addr_sel = 2'b01;
 				wr_enable	= 1'b1;
 				WEnable = 1'b1;
-				busy = 1;
+				busy_val = 1;
 				if (SizeCount == 16'b10)
 					next_state = s6;
 				else
@@ -204,7 +207,7 @@ module BNN
 				write_addr_sel = 2'b10;
 				wr_enable	= 1'b1;
 				WEnable = 1'b1;
-				busy = 1;
+				busy_val = 1;
 				next_state = s11;
 				
 				if(sram_dut_read_data == 8'hff)
@@ -221,7 +224,7 @@ module BNN
 				write_addr_sel = 2'b10;
 				wr_enable	= 1'b0;
 				WEnable = 1'b0;
-				busy = 1;
+				busy_val = 1;
 			
 				next_state = s12;
 				end
@@ -232,7 +235,7 @@ module BNN
 				write_addr_sel = 2'b10;
 				wr_enable	= 1'b0;
 				WEnable = 1'b0;
-				busy = 1;
+				busy_val = 1;
 				next_state = s13;
 				end
 			s13 : begin
@@ -242,7 +245,7 @@ module BNN
 				write_addr_sel = 2'b10;
 				wr_enable	= 1'b0;
 				WEnable = 1'b1;
-				busy = 1;
+				busy_val = 1;
 				if(SizeCount == (SizeCount_check - 16'b10))
 					next_state = s9;
 				else
@@ -256,7 +259,7 @@ module BNN
 				write_addr_sel = 2'b10;
 				wr_enable	= 1'b0;
 				WEnable = 1'b0;
-				busy = 1;
+				busy_val = 1;
 
 				next_state 	= s0;
 			end
