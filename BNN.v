@@ -43,10 +43,8 @@ module BNN
 	//Reg declaration
 	reg [15:0]		SizeCount;	//Count of data to be read from SRAM 
 	reg [15:0]		SizeCount_check;  //to account for 3 different input sizes
-	reg [15:0]		State8SizeCountCheck;
 	reg [15:0]		Ain;		//Value of A
 	reg [15:0]		Win;
-	//reg [3:0]		Bin;		//Value of B
 	reg [15:0]		Accumulator;	//Accumulator
 	reg [3:0]		current_state;	//FSM current state
 	reg [3:0]		next_state;	//FSM next state
@@ -54,16 +52,12 @@ module BNN
 	reg [1:0]		wmem_read_addr_sel;//Select line for mux that manipulates weight address register
 	reg [1:0]		write_addr_sel; //Write address select
 	reg [1:0]		read_addr_sel;	//Select line for mux that manipulates read address register
-	reg [1:0]		Accumulate_sel;	//Select line for mux that manipulates Accumulator register
-	reg 			Aenable;	//Enable for Input register
 	reg				WEnable; //Enable for weight register
 	//Wire declaration
-	wire [15:0]		AmulB;		//Can be max 8 bits, both Ain and Bin 4 bits
 	reg [15:0]		RowN;
 	reg [15:0]		RowN1;
 	reg [15:0]		RowN2;
 	reg [2:0]		result; //result after XNOR and sum
-	reg 			res_temp;
 	reg [15:0]		Result_RowN; //Result of individual row	
 	reg 			carry;
 	reg [15:0]		Output; //stores the output after convolution
@@ -90,7 +84,6 @@ module BNN
 				wr_enable	= 1'b0;
 				WEnable = 1'b0;
 				busy = 0;
-				//Accumulate_sel 	= 2'b10;
 				if (run == 1'b1)
 					next_state = s1;
 				else
@@ -104,7 +97,6 @@ module BNN
 				wr_enable	= 1'b0;
 				WEnable = 1'b0;
 				busy = 1;
-				//Accumulate_sel 	= 2'b10;
 				next_state 	= s2;
 			end
 			s2 : begin
@@ -129,7 +121,7 @@ module BNN
 				wr_enable	= 1'b0;
 				WEnable = 1'b0;
 				busy = 1;
-				//Accumulate_sel 	= 2'b10;
+	
 				next_state = s4;
 			end
 			s4 : begin
@@ -140,10 +132,7 @@ module BNN
 				wr_enable	= 1'b0;
 				WEnable = 1'b0;
 				busy = 1;
-				//Accumulate_sel 	= 2'b10;
-				//if(SizeCount == (SizeCount_check - 16'b11))
-				//	next_state = s8;
-				//else
+				
 				next_state = s5;
 			end
 			s5 : begin
@@ -156,8 +145,6 @@ module BNN
 				busy = 1;
 				if(SizeCount == (SizeCount_check - 16'b10))
 					next_state = s8;
-				//else if (SizeCount == 16'b10)
-				//	next_state = s6;
 				else
 					next_state = s5;
 			end
@@ -169,7 +156,6 @@ module BNN
 				wr_enable	= 1'b1;
 				WEnable = 1'b1;
 				busy = 1;
-				//Accumulate_sel 	= 2'b01;
 				if (SizeCount == 16'b01)
 					next_state = s7;
 				else
@@ -183,11 +169,8 @@ module BNN
 				wr_enable	= 1'b1;
 				WEnable = 1'b1;
 				busy = 1;
-				//if(SizeCount == 16'b0)
+				
 				next_state = s10;
-				//Accumulate_sel 	= 2'b01;
-				//else
-				//	next_state 	= s2;
 			end
 			s8 : begin
 				size_count_sel 	= 2'b01;
@@ -197,9 +180,7 @@ module BNN
 				wr_enable	= 1'b1;
 				WEnable = 1'b1;
 				busy = 1;
-				//if (SizeCount == 16'b10)
-				//	next_state = s6;
-				//else
+				
 				next_state 	= s9;
 			end
 			s9 : begin
@@ -241,7 +222,7 @@ module BNN
 				wr_enable	= 1'b0;
 				WEnable = 1'b0;
 				busy = 1;
-				//Accumulate_sel 	= 2'b10;
+			
 				next_state = s12;
 				end
 			s12 : begin
@@ -264,14 +245,10 @@ module BNN
 				busy = 1;
 				if(SizeCount == (SizeCount_check - 16'b10))
 					next_state = s9;
-				//else if (SizeCount == 16'b10)
-				//	next_state = s6;
 				else
 					next_state = s13;
 				end
 			
-				//Accumulate_sel 	= 2'b10;
-				//next_state 	= s0;
 			default : begin
 				size_count_sel 	= 2'b10;
 				read_addr_sel 	= 2'b10;
@@ -280,7 +257,7 @@ module BNN
 				wr_enable	= 1'b0;
 				WEnable = 1'b0;
 				busy = 1;
-				//Accumulate_sel 	= 2'b10;
+
 				next_state 	= s0;
 			end
 		endcase 
@@ -295,10 +272,15 @@ module BNN
 					SizeCount_check <= sram_dut_read_data;
 				end
 			else if (size_count_sel == 2'b01)
-			    SizeCount <= SizeCount - 16'b1;
-			else if(size_count_sel == 2'b10)	 
-				SizeCount <= SizeCount;
-			
+				begin
+					SizeCount <= SizeCount - 16'b1;
+					SizeCount_check <= SizeCount_check;
+				end
+			else if(size_count_sel == 2'b10)
+				begin
+					SizeCount <= SizeCount;
+					SizeCount_check <= SizeCount_check;
+				end
 	end	
 	
 	
@@ -306,32 +288,22 @@ module BNN
 		carry = 1'b0;
 		result = 3'b0;
 		Result_RowN = 16'b0;
-		//if(SizeCount_check == 16'b10000) Compute regardless
-		//	begin
-				//Computing Row wise convolution
-				for(i=0; i<14; i = i+1) begin
-					{carry, result} = {2'b00,((RowN2[i]~^Win[0]))} + {2'b00,((RowN2[i+1]~^Win[1]))} + {2'b00,((RowN2[i+2]~^Win[2]))} +
-								{2'b00,((RowN1[i]~^Win[3]))} + {2'b00,((RowN1[i+1]~^Win[4]))} + {2'b00,((RowN1[i+2]~^Win[5]))} +
-									{2'b00,((RowN[i]~^Win[6]))} + {2'b00,((RowN[i+1]~^Win[7]))} + {2'b00,((RowN[i+2]~^Win[8]))};
+		//Computing Row wise convolution
+		for(i=0; i<14; i = i+1) begin
+			{carry, result} = {2'b00,((RowN2[i]~^Win[0]))} + {2'b00,((RowN2[i+1]~^Win[1]))} + {2'b00,((RowN2[i+2]~^Win[2]))} +
+							{2'b00,((RowN1[i]~^Win[3]))} + {2'b00,((RowN1[i+1]~^Win[4]))} + {2'b00,((RowN1[i+2]~^Win[5]))} +
+							{2'b00,((RowN[i]~^Win[6]))} + {2'b00,((RowN[i+1]~^Win[7]))} + {2'b00,((RowN[i+2]~^Win[8]))};
 					
-					//$display("RowN2 :",RowN2);
-					//$display("RowN2 :",RowN1);
-					//$display("RowN2 :",RowN);
-						
-					//{carry, res_temp} = (RowN2[i]~^Win[0]) + (RowN2[i+1]~^Win[1]) + (RowN2[i+2]~^Win[2]);
-					//result[0] = res_temp;
-					//{carry,res_temp} = carry + 
 					
-					//$display("result :", result);
-					if({carry,result} <= 3'b100)
-						begin
-							Result_RowN[i] = 0;	
-						end
-					else
-						begin
-							Result_RowN[i] = 1;
-						end
-				//end
+		
+		if({carry,result} <= 3'b100)
+			begin
+				Result_RowN[i] = 0;	
+			end
+		else
+			begin
+				Result_RowN[i] = 1;
+			end
 					
 			
 	end
@@ -355,18 +327,14 @@ module BNN
 				RowN<= 16'b0;
 				RowN1<= 16'b0;
 				RowN2<= 16'b0;
-				//Bin <= 4'b0;
 			end
 			else if (WEnable == 1'b1) begin
 				Ain <= sram_dut_read_data[15:0];
 				Win <= wmem_dut_read_data[15:0];
-				//Bin <= read_data[7:4];
 				RowN<= sram_dut_read_data[15:0];
 				RowN1<=RowN;
 				RowN2<=RowN1;
 				
-				//Value of output after computation
-				//Output<=Result_RowN;
 			end
 	end
 	
